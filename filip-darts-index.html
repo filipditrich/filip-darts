@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101114" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Šipkový turnaj</title>
+  <style>
+    :root {
+      --bg: #0b0c0f;
+      --panel: #15171c;
+      --panel-2: #1b1e24;
+      --text: #f4f6f8;
+      --muted: #9ba3af;
+      --line: #2a2f38;
+      --accent: #7c5cff;
+      --accent-2: #9b87ff;
+      --success: #24c978;
+      --danger: #ff5d6c;
+      --warning: #ffb84d;
+      --shadow: 0 14px 40px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(124,92,255,.16), transparent 34%),
+        var(--bg);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(28px, env(safe-area-inset-bottom));
+    }
+
+    button, select, input { font: inherit; }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 14px 4px 18px;
+    }
+
+    .eyebrow {
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 8vw, 46px);
+      line-height: 1.02;
+      margin: 0 0 10px;
+      letter-spacing: -.04em;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 14px 0 16px;
+    }
+
+    .stat {
+      background: rgba(21,23,28,.88);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 23px;
+      line-height: 1;
+      margin-bottom: 7px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tabs {
+      position: sticky;
+      top: max(8px, env(safe-area-inset-top));
+      z-index: 10;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 6px;
+      background: rgba(21,23,28,.88);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      padding: 11px 8px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .card {
+      background: rgba(21,23,28,.92);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .card h2, .card h3 {
+      margin: 0;
+      letter-spacing: -.02em;
+    }
+
+    .card h2 { font-size: 20px; }
+    .card h3 { font-size: 17px; }
+
+    .pill {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+    }
+
+    .pill.done {
+      color: #b8f5d6;
+      background: rgba(36,201,120,.12);
+      border-color: rgba(36,201,120,.3);
+    }
+
+    .players {
+      display: grid;
+      gap: 8px;
+    }
+
+    .player-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 11px 12px;
+    }
+
+    .player-name { font-weight: 700; }
+
+    .place {
+      min-width: 112px;
+      border: 1px solid #3a404b;
+      border-radius: 10px;
+      background: #101216;
+      color: var(--text);
+      padding: 9px 10px;
+      outline: none;
+    }
+
+    .place:focus { border-color: var(--accent); }
+
+    .footer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 13px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      min-height: 46px;
+    }
+
+    .btn.primary {
+      flex: 1;
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn.secondary {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn.danger {
+      color: #ffd4d8;
+      background: rgba(255,93,108,.12);
+      border: 1px solid rgba(255,93,108,.28);
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 10px;
+    }
+
+    .next {
+      border-color: rgba(124,92,255,.5);
+      box-shadow: 0 0 0 1px rgba(124,92,255,.16), var(--shadow);
+    }
+
+    .next-banner {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 12px;
+      color: #d9d1ff;
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 5px rgba(124,92,255,.14);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 610px;
+      background: var(--panel-2);
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      background: #171a20;
+      position: sticky;
+      top: 0;
+    }
+
+    td:first-child, th:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: #171a20;
+      z-index: 2;
+    }
+
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .rank {
+      display: inline-grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      margin-right: 7px;
+      border-radius: 50%;
+      background: #292e37;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .top4 td:first-child { color: #dcd5ff; }
+    .points { font-weight: 900; }
+
+    .section-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 8px 0 0;
+    }
+
+    .finalists {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .finalist {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 12px;
+    }
+
+    .finalist small { color: var(--muted); }
+    .finalist strong { display: block; margin-top: 4px; }
+
+    .champion {
+      text-align: center;
+      padding: 26px 14px;
+      background:
+        radial-gradient(circle at top, rgba(124,92,255,.26), transparent 60%),
+        var(--panel-2);
+      border-radius: 16px;
+      border: 1px solid rgba(124,92,255,.38);
+    }
+
+    .champion .trophy {
+      font-size: 46px;
+      margin-bottom: 8px;
+    }
+
+    .champion h2 {
+      font-size: 30px;
+      margin: 0 0 6px;
+    }
+
+    .muted { color: var(--muted); }
+
+    .settings-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .setting-row code {
+      color: #d4ccff;
+      font-weight: 800;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      z-index: 100;
+      padding: 12px 16px;
+      background: #f5f7fa;
+      color: #101114;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 850;
+      opacity: 0;
+      pointer-events: none;
+      transition: .22s ease;
+      box-shadow: 0 12px 40px rgba(0,0,0,.34);
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .danger-zone {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    @media (max-width: 520px) {
+      .stats { gap: 7px; }
+      .stat { padding: 12px 9px; }
+      .stat strong { font-size: 20px; }
+      .player-line { align-items: stretch; flex-direction: column; }
+      .place { width: 100%; }
+      .footer-actions { flex-direction: column; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div class="eyebrow">Darts night</div>
+      <h1>Šipkový turnaj</h1>
+      <p class="sub">6 hráčů · 6 základních her · 4 hráči v každé hře · Top 4 postupují do finále</p>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><strong id="completedCount">0/6</strong><span>Základní hry</span></div>
+      <div class="stat"><strong id="leaderName">—</strong><span>Průběžně vede</span></div>
+      <div class="stat"><strong id="nextGame">1</strong><span>Další hra</span></div>
+    </section>
+
+    <nav class="tabs" aria-label="Navigace">
+      <button class="tab active" data-view="games">Hry</button>
+      <button class="tab" data-view="table">Tabulka</button>
+      <button class="tab" data-view="final">Finále</button>
+    </nav>
+
+    <section id="games" class="view active"></section>
+
+    <section id="table" class="view">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Průběžná tabulka</h2>
+            <p class="section-note">Řazení: body → 1. místa → 2. místa → 3. místa.</p>
+          </div>
+          <span class="pill">Top 4 postupují</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hráč</th>
+                <th>Hry</th>
+                <th>1.</th>
+                <th>2.</th>
+                <th>3.</th>
+                <th>4.</th>
+                <th>Body</th>
+              </tr>
+            </thead>
+            <tbody id="standingsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="final" class="view"></section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h3>Pravidla</h3>
+          <p class="section-note">Za umístění se udělují body 4–3–2–1. Ve finále získá Top 4 bonus 3–2–1–0 podle pořadí po základní části a poté body 4–3–2–1 za finálové umístění.</p>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <div class="setting-row"><span>1. místo</span><code>4 body</code></div>
+        <div class="setting-row"><span>2. místo</span><code>3 body</code></div>
+        <div class="setting-row"><span>3. místo</span><code>2 body</code></div>
+        <div class="setting-row"><span>4. místo</span><code>1 bod</code></div>
+      </div>
+      <div class="danger-zone">
+        <button id="shareBtn" class="btn secondary">Sdílet / zkopírovat stav</button>
+        <button id="resetBtn" class="btn danger">Resetovat celý turnaj</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    const PLAYERS = ["Filip", "Folpi", "Dolejš", "Příhoda", "Pham", "Štajer"];
+    const GAMES = [
+      ["Dolejš", "Příhoda", "Pham", "Štajer"],
+      ["Filip", "Folpi", "Pham", "Štajer"],
+      ["Filip", "Folpi", "Dolejš", "Příhoda"],
+      ["Folpi", "Příhoda", "Pham", "Štajer"],
+      ["Filip", "Dolejš", "Příhoda", "Štajer"],
+      ["Filip", "Folpi", "Dolejš", "Pham"]
+    ];
+    const POINTS = {1:4, 2:3, 3:2, 4:1};
+    const STORAGE_KEY = "darts_tournament_v1";
+
+    let state = loadState();
+
+    function defaultState() {
+      return {
+        games: GAMES.map(() => null),
+        final: null
+      };
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? {...defaultState(), ...JSON.parse(saved)} : defaultState();
+      } catch {
+        return defaultState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function toast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => el.classList.remove("show"), 1800);
+    }
+
+    function getStandings() {
+      const stats = Object.fromEntries(PLAYERS.map(name => [name, {
+        name, games:0, first:0, second:0, third:0, fourth:0, points:0
+      }]));
+
+      state.games.forEach(result => {
+        if (!result) return;
+        Object.entries(result).forEach(([name, place]) => {
+          const p = Number(place);
+          stats[name].games += 1;
+          stats[name].points += POINTS[p];
+          if (p === 1) stats[name].first += 1;
+          if (p === 2) stats[name].second += 1;
+          if (p === 3) stats[name].third += 1;
+          if (p === 4) stats[name].fourth += 1;
+        });
+      });
+
+      return Object.values(stats).sort((a,b) =>
+        b.points - a.points ||
+        b.first - a.first ||
+        b.second - a.second ||
+        b.third - a.third ||
+        a.name.localeCompare(b.name, "cs")
+      );
+    }
+
+    function completedGames() {
+      return state.games.filter(Boolean).length;
+    }
+
+    function allBaseDone() {
+      return completedGames() === GAMES.length;
+    }
+
+    function nextGameIndex() {
+      return state.games.findIndex(x => !x);
+    }
+
+    function renderHeader() {
+      const done = completedGames();
+      const standings = getStandings();
+      document.getElementById("completedCount").textContent = `${done}/6`;
+      document.getElementById("leaderName").textContent = done ? standings[0].name : "—";
+      const next = nextGameIndex();
+      document.getElementById("nextGame").textContent = next === -1 ? "Finále" : String(next + 1);
+    }
+
+    function renderGames() {
+      const container = document.getElementById("games");
+      const next = nextGameIndex();
+
+      container.innerHTML = GAMES.map((players, index) => {
+        const result = state.games[index];
+        const isNext = index === next;
+        return `
+          <article class="card ${isNext ? "next" : ""}">
+            ${isNext ? `<div class="next-banner"><span class="dot"></span> Další na řadě</div>` : ""}
+            <div class="card-head">
+              <div>
+                <h2>Hra ${index + 1}</h2>
+                <p class="section-note">Pauza: ${PLAYERS.filter(p => !players.includes(p)).join(", ")}</p>
+              </div>
+              <span class="pill ${result ? "done" : ""}">${result ? "Hotovo" : "Čeká"}</span>
+            </div>
+            <div class="players">
+              ${players.map(name => `
+                <label class="player-line">
+                  <span class="player-name">${name}</span>
+                  <select class="place" data-game="${index}" data-player="${name}">
+                    <option value="">Vyber umístění</option>
+                    ${[1,2,3,4].map(place => `
+                      <option value="${place}" ${result && Number(result[name]) === place ? "selected" : ""}>
+                        ${place}. místo · ${POINTS[place]} b
+                      </option>
+                    `).join("")}
+                  </select>
+                </label>
+              `).join("")}
+            </div>
+            <div class="footer-actions">
+              <button class="btn primary save-game" data-game="${index}">${result ? "Uložit změny" : "Uložit výsledek"}</button>
+              ${result ? `<button class="btn secondary clear-game" data-game="${index}">Smazat výsledek</button>` : ""}
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      container.querySelectorAll(".save-game").forEach(btn => {
+        btn.addEventListener("click", () => saveGame(Number(btn.dataset.game)));
+      });
+
+      container.querySelectorAll(".clear-game").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.games[Number(btn.dataset.game)] = null;
+          state.final = null;
+          saveState();
+          render();
+          toast("Výsledek smazán");
+        });
+      });
+    }
+
+    function saveGame(index) {
+      const selects = [...document.querySelectorAll(`select[data-game="${index}"]`)];
+      const values = selects.map(s => Number(s.value));
+
+      if (values.some(v => !v)) {
+        toast("Vyber umístění všem 4 hráčům");
+        return;
+      }
+      if (new Set(values).size !== 4) {
+        toast("Každé umístění může být jen jednou");
+        return;
+      }
+
+      const result = {};
+      selects.forEach(s => result[s.dataset.player] = Number(s.value));
+      state.games[index] = result;
+      state.final = null;
+      saveState();
+      render();
+      toast(`Hra ${index + 1} uložena`);
+    }
+
+    function renderTable() {
+      const standings = getStandings();
+      document.getElementById("standingsBody").innerHTML = standings.map((s, index) => `
+        <tr class="${index < 4 ? "top4" : ""}">
+          <td><span class="rank">${index + 1}</span>${s.name}</td>
+          <td>${s.games}</td>
+          <td>${s.first}</td>
+          <td>${s.second}</td>
+          <td>${s.third}</td>
+          <td>${s.fourth}</td>
+          <td class="points">${s.points}</td>
+        </tr>
+      `).join("");
+    }
+
+    function getFinalists() {
+      return getStandings().slice(0,4);
+    }
+
+    function getFinalResults() {
+      if (!state.final) return null;
+      const finalists = getFinalists();
+      const bonus = [3,2,1,0];
+      return finalists.map((player, index) => {
+        const place = Number(state.final[player.name]);
+        return {
+          name: player.name,
+          baseRank: index + 1,
+          bonus: bonus[index],
+          finalPlace: place,
+          finalPoints: POINTS[place],
+          total: bonus[index] + POINTS[place]
+        };
+      }).sort((a,b) =>
+        b.total - a.total ||
+        a.finalPlace - b.finalPlace ||
+        a.baseRank - b.baseRank
+      );
+    }
+
+    function renderFinal() {
+      const container = document.getElementById("final");
+
+      if (!allBaseDone()) {
+        container.innerHTML = `
+          <div class="card">
+            <div class="empty">
+              <h2>Finále je zatím zamčené</h2>
+              <p>Nejdřív dokončete všech 6 základních her.</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const finalists = getFinalists();
+      const finalResults = getFinalResults();
+
+      if (finalResults) {
+        container.innerHTML = `
+          <div class="card">
+            <div class="champion">
+              <div class="trophy">🏆</div>
+              <div class="muted">Vítěz turnaje</div>
+              <h2>${finalResults[0].name}</h2>
+              <div>${finalResults[0].total} finálových bodů</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>Konečné pořadí</h2>
+                <p class="section-note">Součet bonusu ze základní části a bodů za finále.</p>
+              </div>
+              <span class="pill done">Dokončeno</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Hráč</th>
+                    <th>Bonus</th>
+                    <th>Finále</th>
+                    <th>Body</th>
+                    <th>Celkem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${finalResults.map((r,index) => `
+                    <tr>
+                      <td><span class="rank">${index + 1}</span>${r.name}</td>
+                      <td>${r.bonus}</td>
+                      <td>${r.finalPlace}. místo</td>
+                      <td>${r.finalPoints}</td>
+                      <td class="points">${r.total}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+            <div class="footer-actions">
+              <button id="editFinal" class="btn secondary">Upravit finále</button>
+            </div>
+          </div>
+        `;
+        document.getElementById("editFinal").addEventListener("click", () => {
+          state.final = null;
+          saveState();
+          render();
+        });
+        return;
+      }
+
+      const bonus = [3,2,1,0];
+      container.innerHTML = `
+        <div class="card next">
+          <div class="next-banner"><span class="dot"></span> Velké finále</div>
+          <div class="card-head">
+            <div>
+              <h2>Top 4</h2>
+              <p class="section-note">Vyber konečné pořadí ve finálové hře.</p>
+            </div>
+            <span class="pill">1 hra</span>
+          </div>
+
+          <div class="finalists">
+            ${finalists.map((p,index) => `
+              <div class="finalist">
+                <small>${index + 1}. po základní části · bonus ${bonus[index]} b</small>
+                <strong>${p.name}</strong>
+              </div>
+            `).join("")}
+          </div>
+
+          <div class="players">
+            ${finalists.map(p => `
+              <label class="player-line">
+                <span class="player-name">${p.name}</span>
+                <select class="place final-place" data-player="${p.name}">
+                  <option value="">Vyber umístění</option>
+                  ${[1,2,3,4].map(place => `
+                    <option value="${place}">${place}. místo · ${POINTS[place]} b</option>
+                  `).join("")}
+                </select>
+              </label>
+            `).join("")}
+          </div>
+
+          <div class="footer-actions">
+            <button id="saveFinal" class="btn primary">Vyhlásit vítěze</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("saveFinal").addEventListener("click", saveFinal);
+    }
+
+    function saveFinal() {
+      const selects = [...document.querySelectorAll(".final-place")];
+      const values = selects.map(s => Number(s.value));
+      if (values.some(v => !v)) {
+        toast("Vyber umístění všem finalistům");
+        return;
+      }
+      if (new Set(values).size !== 4) {
+        toast("Každé umístění může být jen jednou");
+        return;
+      }
+      state.final = {};
+      selects.forEach(s => state.final[s.dataset.player] = Number(s.value));
+      saveState();
+      render();
+      toast("Turnaj dokončen");
+    }
+
+    function buildSummary() {
+      const standings = getStandings();
+      let text = "🎯 Šipkový turnaj\n\nPrůběžná tabulka:\n";
+      standings.forEach((s,index) => {
+        text += `${index + 1}. ${s.name} — ${s.points} b (${s.first}× 1. místo)\n`;
+      });
+
+      if (state.final) {
+        const results = getFinalResults();
+        text += "\n🏆 Konečné pořadí:\n";
+        results.forEach((r,index) => {
+          text += `${index + 1}. ${r.name} — ${r.total} finálových bodů\n`;
+        });
+      } else {
+        text += `\nOdehráno ${completedGames()}/6 základních her.`;
+      }
+      return text;
+    }
+
+    async function shareState() {
+      const text = buildSummary();
+      try {
+        if (navigator.share) {
+          await navigator.share({title: "Šipkový turnaj", text});
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        toast("Stav zkopírován");
+      } catch {
+        const area = document.createElement("textarea");
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+        toast("Stav zkopírován");
+      }
+    }
+
+    function resetTournament() {
+      const ok = confirm("Opravdu smazat všechny výsledky a začít znovu?");
+      if (!ok) return;
+      state = defaultState();
+      saveState();
+      render();
+      toast("Turnaj resetován");
+    }
+
+    function setupTabs() {
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+          tab.classList.add("active");
+          document.getElementById(tab.dataset.view).classList.add("active");
+        });
+      });
+    }
+
+    function render() {
+      renderHeader();
+      renderGames();
+      renderTable();
+      renderFinal();
+    }
+
+    setupTabs();
+    document.getElementById("shareBtn").addEventListener("click", shareState);
+    document.getElementById("resetBtn").addEventListener("click", resetTournament);
+    render();
+  </script>
+</body>
+</html>
